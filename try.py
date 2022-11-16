@@ -3,7 +3,6 @@ import numpy as np
 import math
 
 
-
 class ROBOT:
 
     def __init__(self, dt = 0.001, initX = 0, initY = 0, initZ = 0, gene = np.zeros([4, 3])):
@@ -209,11 +208,13 @@ class MULTI_SIMULATION:
 
     def __init__(self):
 
-        self.population_size = 8
-        self.evaluations = 2
-        self.sim_time = 50
+        self.population_size = 80
+        self.evaluations = 100
+        self.mutation_rate = 0.3
+        self.sim_time = 5
         self.dt = 0.001
-        self.sim_flag = True
+        self.sim_flag = False
+        self.gene_scope = [0.06, math.pi * 2, math.pi]
 
         self.step()
 
@@ -249,9 +250,9 @@ class MULTI_SIMULATION:
             gene_per_robot = []
             #! L=L_0+A*sin(B*t+C)
             for j in range(4):
-                A = np.random.uniform(-0.06, 0.06)
-                B = np.random.uniform(-math.pi, math.pi)
-                C = np.random.uniform(-math.pi * 2, math.pi * 2)
+                A = np.random.uniform(-self.gene_scope[0], self.gene_scope[0])
+                B = np.random.uniform(-self.gene_scope[1], self.gene_scope[1])
+                C = np.random.uniform(-self.gene_scope[2], self.gene_scope[2])
                 gene_per_robot.append([A, B, C])
             population_gene.append(gene_per_robot)
 
@@ -348,8 +349,8 @@ class MULTI_SIMULATION:
             parent_index = np.random.choice(population_gene.shape[0], 2, replace=False)
             while parent_index[0] in used_list or parent_index[1] in used_list:
                 parent_index = np.random.choice(population_gene.shape[0], 2, replace=False)
-            print(f'this is parent index {parent_index}')
-            print(f'this is used index {used_list}')
+            # print(f'this is parent index {parent_index}')
+            # print(f'this is used index {used_list}')
             used_list.append(parent_index[0])
             used_list.append(parent_index[1])
 
@@ -358,6 +359,20 @@ class MULTI_SIMULATION:
             cross_point = np.random.choice(len(parent_1) - 1) + 1
             child_1 = np.concatenate([parent_1[:cross_point], parent_2[cross_point:]])
             child_2 = np.concatenate([parent_2[:cross_point], parent_1[cross_point:]])
+            
+            # print(parent_1.shape[0])
+            # print(parent_2)
+            # print(child_1.shape[0])
+            # print(child_2)
+
+            probability = np.random.rand()
+            if probability < 0.3:
+                child_1 = self.mutation(child_1)
+                print('child_1 mutated!')
+            probability = np.random.rand()
+            if probability < 0.3:
+                child_2 = self.mutation(child_2)
+                print('child_2 mutated!')
 
             new_population_gene.append(parent_1.reshape(4,3))
             new_population_gene.append(parent_2.reshape(4,3))
@@ -368,9 +383,22 @@ class MULTI_SIMULATION:
         # print(new_population_gene)
         return new_population_gene
 
-    def mutation():
+    def mutation(self, child):
 
-        pass
+        index = np.random.choice(len(child), 3, replace=False)
+
+        for i in range(len(index)):
+
+            child[index[i]] = child[index[i]] + child[index[i]] * np.random.uniform(-0.5, 0.5)
+
+            # if index[i] == 0 or 3 or 6 or 9:
+            #     child[index[i]] = np.random.uniform(-self.gene_scope[0], self.gene_scope[0])
+            # if index[i] == 1 or 4 or 7 or 10:
+            #     child[index[i]] = np.random.uniform(-self.gene_scope[1], self.gene_scope[2])
+            # if index[i] == 2 or 5 or 8 or 11:
+            #     child[index[i]] = np.random.uniform(-self.gene_scope[1], self.gene_scope[2])
+
+        return child
 
     def step(self):
 
@@ -425,6 +453,10 @@ class MULTI_SIMULATION:
         robots = self.genereate_robots(population_gene)
         print(f'this is the number of robots: {len(robots)}')
 
+        with open('fitness.txt', "a") as filewrite:
+            filewrite.truncate(0)
+        with open('gene.txt', "a") as filewrite:
+            filewrite.truncate(0)
 
         for i in range(self.evaluations):
 
@@ -437,6 +469,14 @@ class MULTI_SIMULATION:
                 best_gene = gene
                 print(f'In evaluation {i}, the max fitness is {max_fitness}.')
                 print(f'In evaluation {i}, the best gene is\n {best_gene}.')
+                best_gene.reshape(-1,)
+            else:
+                print(f'the result in evaluation {i} is worse that the best one')
+
+            with open('fitness.txt', "a") as filewrite:   #”a"代表着每次运行都追加txt的内容
+                filewrite.write(str(max_fitness) + '\n')
+            with open('gene.txt', "a") as filewrite:   #”a"代表着每次运行都追加txt的内容
+                filewrite.write(str(best_gene) + '\n')
 
             parent_population_gene = self.selection(population_fitness, robots)
 
@@ -452,64 +492,3 @@ if __name__ == "__main__":
 
     multi_simulation = MULTI_SIMULATION()
     
-    # GUI = False
-    
-    # if GUI == True:
-
-    #     def make_grid(xmax, dx, scale=15):
-    #         for x in range(-xmax, xmax + dx, dx):  # Create vertical lines
-    #             curve(pos=[vector(x / scale, 0, xmax / scale), vector(x / scale, 0, -xmax / scale)], radius=0.001)
-    #         for z in range(-xmax, xmax + dx, dx):  # Create horizontal lines
-    #             curve(pos=[vector(xmax / scale, 0, z / scale), vector(-xmax / scale, 0, z / scale)], radius=0.001)
-
-    #     scene.height = 720
-    #     scene.width = 1280
-    #     make_grid(xmax=30, dx=1)
-    #     # lamp = local_light(pos=vector(1,1,1), color=color.white)
-    #     # color = color.green
-
-    #     # Plot masses
-    #     def display_masses(mass_array):
-    #         spheres = []
-    #         for mass in mass_array:
-    #             pt = sphere(pos=mass.pos, radius=0.01, color=color)
-    #             spheres.append([pt, mass])
-    #         return spheres # returns a list of Sphere objects that are plotted in vpython
-    #     spheres = display_masses(robot.dots)
-    #     # print(spheres)
-
-    #     # Plot springs
-    #     def display_springs(cube_springs):
-    #         lines = []
-    #         for spring in cube_springs:
-    #             cyl = cylinder(pos=spring.m1.pos, axis=spring.axis, color=color, radius=0.001)
-    #             lines.append([cyl, spring])
-    #         return lines # returns a list of Cylinder objects that are plotted in vpython
-    #     rods = display_springs(robot.springs)
-
-    #     while 1:
-
-    #         counter += 1
-    #         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #         dots_pos = robot.robotupdate()
-    #         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #         # print(dots_pos)
-
-    #         if counter % 10 == 0:
-    #             for i in range(len(dots_pos)):
-    #                 spheres[i][0].pos = dots_pos[i]
-
-    #             for i in range(len(rods)):
-    #                 rod = rods[i][0]
-    #                 spring = rods[i][1]
-    #                 rod.pos = dots_pos[spring.i1]
-    #                 rod.axis = dots_pos[spring.i2] - dots_pos[spring.i1]
-    # else:
-
-    #     print('over')
-    #     # while 1:
-
-    #     #     counter += 1
-
-    #     #     dots_pos = robot.robotupdate()
-    #     #     print(dots_pos)
