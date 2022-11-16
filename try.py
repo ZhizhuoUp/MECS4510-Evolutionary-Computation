@@ -208,8 +208,8 @@ class MULTI_SIMULATION:
 
     def __init__(self):
 
-        self.population_size = 80
-        self.evaluations = 100
+        self.population_size = 4
+        self.evaluations = 200
         self.mutation_rate = 0.3
         self.sim_time = 5
         self.dt = 0.001
@@ -389,7 +389,7 @@ class MULTI_SIMULATION:
 
         for i in range(len(index)):
 
-            child[index[i]] = child[index[i]] + child[index[i]] * np.random.uniform(-0.5, 0.5)
+            child[index[i]] = child[index[i]] + child[index[i]] * np.random.uniform(-0.3, 0.3)
 
             # if index[i] == 0 or 3 or 6 or 9:
             #     child[index[i]] = np.random.uniform(-self.gene_scope[0], self.gene_scope[0])
@@ -449,8 +449,9 @@ class MULTI_SIMULATION:
             spheres = 0
             rods = 0
         
-        population_gene = self.generate_gene() #! this is numpy array
-        robots = self.genereate_robots(population_gene)
+            population_gene = self.generate_gene() #! this is numpy array
+            robots = self.genereate_robots(population_gene)
+
         print(f'this is the number of robots: {len(robots)}')
 
         with open('fitness.txt', "a") as filewrite:
@@ -479,9 +480,9 @@ class MULTI_SIMULATION:
                 filewrite.write(str(best_gene) + '\n')
 
             parent_population_gene = self.selection(population_fitness, robots)
-
+            print(parent_population_gene)
             new_population_gene = self.crossover(parent_population_gene)
-
+            print(new_population_gene)
             robots = self.genereate_robots(new_population_gene)
 
 
